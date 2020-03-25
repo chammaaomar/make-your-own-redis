@@ -23,9 +23,8 @@ def main():
             while True:
                 # blocking
                 data = connection.recv(1024)
-                if not data:
-                    break
-                connection.sendall(data)
+                connection.send(b"+PONG\r\n")
+                break
 
 
 if __name__ == "__main__":
