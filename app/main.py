@@ -14,6 +14,18 @@ def main():
         # option name: reuse_addr, value = 1
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((HOST, PORT))
+        sock.listen()  # takes backlog (queue) int parameter for pending connections
+        # accept is blocking; returns a new socket object; use this to talk to client
+        # IPv4 address is (client-host, client-port)
+        connection, address = sock.accept()
+        with connection:
+            print('Welcome to Redis server!', address)
+            while True:
+                # blocking
+                data = connection.recv(1024)
+                if not data:
+                    break
+                connection.sendall(data)
 
 
 if __name__ == "__main__":
