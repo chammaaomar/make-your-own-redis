@@ -23,8 +23,12 @@ def main():
             while True:
                 # blocking
                 data = connection.recv(1024)
+                # reply with a simple string following RESP
+                # + (simple string), - (error), $ (binary-safe string)
+                # : (64 bit signed int), * (array)
                 connection.send(b"+PONG\r\n")
-                break
+                if data == b"\r\n" or data == b"quit\r\n":
+                    break
 
 
 if __name__ == "__main__":
