@@ -43,7 +43,7 @@ def handle_ping(conn, addr):
     with conn:
         while data != b"quit\r\n":
             data = conn.recv(1024)
-            if data == b"PING\r\n":
+            if data == b"$4\\r\\nPING\r\n":
                 conn.sendall(b"$4\r\nPONG")
             data_tokens = data.rstrip(b"\r\n").split(b"\\r\\n")
             if len(data_tokens) < 5:
