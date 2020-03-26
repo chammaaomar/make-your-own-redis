@@ -1,9 +1,19 @@
 import socket
 import asyncio
 import threading
+import re
+
+ARRAY = ord("*")
+ECHO = b"ECHO"
+SET = b"SET"
+GET = b"GET"
+BSTRING = ord("$")
+CMDS = [
+    "ECHO",
+]
 
 
-async def main():
+def main():
     print("Implement your Redis server here!")
 
     # Uncomment this to pass the first stage
@@ -29,15 +39,72 @@ async def main():
 
 
 def handle_ping(conn, addr):
+    data = b""
     with conn:
-        while True:
+        while data != b"quit\r\n":
             data = conn.recv(1024)
-            print(data)
-            if data == b'\r\n' or data == b'quit\r\n':
-                return
-            conn.sendall(b'$4\r\nPONG\r\n')
+            data_tokens = data.rstrip(b"\r\n").split(b"\\r\\n")
+            if len(data_tokens) < 5:
+                error(conn, "Too few arguments passed. Please check.")
+                continue
+            array_spec, *array = data_tokens
+            if bad_array_format(array_spec, array):
+                error(conn, "Array formatting is not RESP-compliant. Please check.")
+                continue
+            cmd_spec, cmd, *args = array
+            if bad_string_format(cmd_spec, cmd):
+                error(conn, "Command formatting is not RESP-compliant. Please check.")
+                continue
+            try:
+                res = handle_request(cmd, args)
+                conn.sendall(res)
+            except (ValueError, NotImplementedError) as e:
+                error(conn, str(e))
+                continue
+
+
+def bad_array_format(array_spec, array):
+    """
+    Checks if request is RESP-compliant. Should be an array of bulk strings
+    """
+    if array_spec[0] != ARRAY:
+        return True
+    arr_len = int(array_spec[1:], base=10)
+    if 2 * arr_len != len(array):
+        return True
+    return False
+
+
+def error(conn, msg):
+    res = bytes(f"-Error: {msg}\r\n", "utf-8")
+    conn.sendall(res)
+    return
+
+
+def bad_string_format(string_spec, string):
+    if string_spec[0] != BSTRING:
+        return True
+    str_len = int(string_spec[1:], base=10)
+    if str_len != len(string):
+        print(str_len)
+        return True
+    return False
+
+
+def handle_request(cmd, args):
+    if cmd == ECHO:
+        if len(args) > 2:
+            raise ValueError("ECHO expects a single bulk string.")
+        if bad_string_format(args[0], args[1]):
+            raise ValueError(
+                "Arg formatting is not RESP-compliant. Please check.")
+
+        # e.g. $2\r\nOK\r\n
+        return b"\r\n".join([*args, b""])
+    else:
+        raise NotImplementedError("Only ECHO has been implemented.")
 
 
 if __name__ == "__main__":
     # creates a new event loop
-    asyncio.run(main())
+    main()
