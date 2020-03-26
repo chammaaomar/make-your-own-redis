@@ -7,9 +7,11 @@ ARRAY = ord("*")
 ECHO = b"ECHO"
 SET = b"SET"
 GET = b"GET"
+PING = b"PING"
 BSTRING = ord("$")
 CMDS = [
     "ECHO",
+    "PING"
 ]
 
 
@@ -40,14 +42,12 @@ def main():
 
 def handle_ping(conn, addr):
     data = b""
-
     with conn:
         while data != b"quit\r\n":
             data = conn.recv(1024)
-            if data in [b"+PING\r\n", b"$4\\r\\nPING\r\n", b"PING\r\n"]:
-                conn.sendall(b"$4\r\nPONG")
-            data_tokens = data.rstrip(b"\r\n").split(b"\\r\\n")
-            if len(data_tokens) < 5:
+            print(data)
+            data_tokens = data.rstrip(b"\r\n").split(b"\r\n")
+            if len(data_tokens) < 3:
                 error(conn, "Too few arguments passed. Please check.")
                 continue
             array_spec, *array = data_tokens
@@ -104,6 +104,14 @@ def handle_request(cmd, args):
 
         # e.g. $2\r\nOK\r\n
         return b"\r\n".join([*args, b""])
+    elif cmd == PING:
+        if len(args) > 2:
+            raise ValueError(
+                "PING expects a single bulk string as message or no message.")
+        elif len(args) == 2 and bad_string_format(args[0], args[1]):
+            raise ValueError(
+                "Arg formatting is not RESP-compliant. Please check.")
+        return b"$4\r\nPONG\r\n"
     else:
         raise NotImplementedError("Only ECHO has been implemented.")
 
