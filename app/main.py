@@ -2,6 +2,7 @@ import socket
 import asyncio
 import threading
 import re
+import time
 
 ARRAY = ord("*")
 INT = ord(":")
@@ -9,6 +10,7 @@ ECHO = b"ECHO"
 SET = b"SET"
 GET = b"GET"
 PING = b"PING"
+PX = b"PX"
 BSTRING = ord("$")
 CMDS = [
     "ECHO",
@@ -100,6 +102,18 @@ def bad_string_format(string_spec, string):
     return False
 
 
+def safe_index(array, item):
+    try:
+        return array.index(item)
+    except ValueError:
+        return -1
+
+
+def expire_key(key, ttl):
+    time.sleep(ttl / 1000.0)
+    del REDIS_DB[key]
+
+
 def handle_request(cmd, args):
     if cmd.upper() == ECHO:
         if len(args) > 2:
@@ -125,17 +139,29 @@ def handle_request(cmd, args):
             raise ValueError(
                 "Arg formatting is not RESP-compliant. Please check.")
         key = args[1]
-        if len(args) == 3:
-            value = args[2]
-            if value[0] != INT:
-                raise ValueError(
-                    "Arg formatting is not RESP-compliant. Please check.")
-            REDIS_DB[key] = int(value[1:], base=10)
-        elif len(args) == 4:
+        data_type = args[2][0]
+        if data_type == INT:
+            value = args[2][1:]
+            REDIS_DB[key] = int(value, base=10)
+            opt_indx = 3
+        elif data_type == BSTRING:
             if bad_string_format(args[2], args[3]):
                 raise ValueError(
                     "Arg formatting is not RESP-compliant. Please check.")
             REDIS_DB[key] = str(args[3], encoding="utf-8")
+            opt_indx = 4
+        opts = args[opt_indx:]
+        exp_indx = safe_index(opts, PX)
+        if exp_indx > -1:
+            if (bad_string_format(opts[exp_indx - 1], opts[exp_indx])
+                    or bad_string_format(opts[exp_indx + 1], opts[exp_indx + 2])):
+                raise ValueError(
+                    "Options formatting is not RESP-compliant. Please check.")
+            ttl = int(opts[exp_indx + 2], base=10)
+            print(ttl)
+            expiry_thread = threading.Thread(
+                target=expire_key, args=(key, ttl))
+            expiry_thread.start()
         return b"$2\r\nOK\r\n"
     elif cmd.upper() == GET:
         if len(args) != 2:
