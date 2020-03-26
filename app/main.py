@@ -4,6 +4,7 @@ import threading
 import re
 
 ARRAY = ord("*")
+INT = ord(":")
 ECHO = b"ECHO"
 SET = b"SET"
 GET = b"GET"
@@ -11,8 +12,12 @@ PING = b"PING"
 BSTRING = ord("$")
 CMDS = [
     "ECHO",
-    "PING"
+    "PING",
+    "SET",
+    "GET",
 ]
+
+REDIS_DB = {}
 
 
 def main():
@@ -109,14 +114,47 @@ def handle_request(cmd, args):
         if len(args) > 2:
             raise ValueError(
                 "PING expects a single bulk string as message or no message.")
-        elif len(args) == 2 and bad_string_format(args[0], args[1]):
+        if len(args) == 2 and bad_string_format(args[0], args[1]):
             raise ValueError(
                 "Arg formatting is not RESP-compliant. Please check.")
         return b"$4\r\nPONG\r\n"
+    elif cmd.upper() == SET:
+        if len(args) < 3:
+            raise ValueError("SET expects a KEY and a VALUE")
+        if bad_string_format(args[0], args[1]):
+            raise ValueError(
+                "Arg formatting is not RESP-compliant. Please check.")
+        key = args[1]
+        if len(args) == 3:
+            value = args[2]
+            if value[0] != INT:
+                raise ValueError(
+                    "Arg formatting is not RESP-compliant. Please check.")
+            REDIS_DB[key] = int(value[1:], base=10)
+        elif len(args) == 4:
+            if bad_string_format(args[2], args[3]):
+                raise ValueError(
+                    "Arg formatting is not RESP-compliant. Please check.")
+            REDIS_DB[key] = str(args[3], encoding="utf-8")
+        return b"\r\n".join([*args[:2], b""])
+    elif cmd.upper() == GET:
+        if len(args) != 2:
+            raise ValueError("GET expects a single key")
+        if bad_string_format(args[0], args[1]):
+            raise ValueError(
+                "Arg formatting is not RESP-compliant. Please check.")
+        value = REDIS_DB.get(args[1], None)
+        if value is None:
+            return b"$-1\r\n"
+        if type(value) is int:
+            return b":" + bytes(str(value), encoding="utf-8") + b"\r\n"
+        if type(value) is str:
+            length_bytes = bytes(str(len(value)), encoding="utf-8")
+            return b"$" + length_bytes + b"\r\n" + bytes(value, encoding="utf-8") + b"\r\n"
     else:
-        raise NotImplementedError("Only ECHO has been implemented.")
+        raise NotImplementedError(
+            f"Only {','.join(CMDS)} have been implemented.")
 
 
 if __name__ == "__main__":
-    # creates a new event loop
     main()
