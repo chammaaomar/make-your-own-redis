@@ -45,7 +45,9 @@ def handle_ping(conn, addr):
     with conn:
         while data != b"quit\r\n":
             data = conn.recv(1024)
-            print(data)
+            # special form of PING command
+            if data == "+PING\r\n":
+                conn.sendall("$4\r\nPONG\r\n")
             data_tokens = data.rstrip(b"\r\n").split(b"\r\n")
             if len(data_tokens) < 3:
                 error(conn, "Too few arguments passed. Please check.")
@@ -89,13 +91,12 @@ def bad_string_format(string_spec, string):
         return True
     str_len = int(string_spec[1:], base=10)
     if str_len != len(string):
-        print(str_len)
         return True
     return False
 
 
 def handle_request(cmd, args):
-    if cmd == ECHO:
+    if cmd.upper() == ECHO:
         if len(args) > 2:
             raise ValueError("ECHO expects a single bulk string.")
         if bad_string_format(args[0], args[1]):
@@ -104,7 +105,7 @@ def handle_request(cmd, args):
 
         # e.g. $2\r\nOK\r\n
         return b"\r\n".join([*args, b""])
-    elif cmd == PING:
+    elif cmd.upper() == PING:
         if len(args) > 2:
             raise ValueError(
                 "PING expects a single bulk string as message or no message.")
