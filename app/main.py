@@ -40,6 +40,7 @@ def main():
 
 def handle_ping(conn, addr):
     data = b""
+
     with conn:
         while data != b"quit\r\n":
             data = conn.recv(1024)
