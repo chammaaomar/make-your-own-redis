@@ -1,9 +1,12 @@
-def main():
+import socket
+import asyncio
+import threading
+
+
+async def main():
     print("Implement your Redis server here!")
 
     # Uncomment this to pass the first stage
-    #
-    import socket
     # localhost (loopback interface; processes on host talk only)
     HOST = "127.0.0.1"
     PORT = 6379  # default redis port; unprivileged > 1023
@@ -17,19 +20,24 @@ def main():
         sock.listen()  # takes backlog (queue) int parameter for pending connections
         # accept is blocking; returns a new socket object; use this to talk to client
         # IPv4 address is (client-host, client-port)
-        connection, address = sock.accept()
-        with connection:
-            print('Welcome to Redis server!', address)
-            while True:
-                # blocking
-                data = connection.recv(1024)
-                # reply with a simple string following RESP
-                # + (simple string), - (error), $ (binary-safe string)
-                # : (64 bit signed int), * (array)
-                connection.send(b"+PONG\r\n")
-                if data == b"\r\n" or data == b"quit\r\n":
-                    break
+        threads = []
+        while True:
+            conn, addr = sock.accept()
+            threads.append(threading.Thread(
+                target=handle_ping, args=(conn, addr)))
+            threads[-1].start()
+
+
+def handle_ping(conn, addr):
+    with conn:
+        while True:
+            data = conn.recv(1024)
+            print(data)
+            if data == b'\r\n' or data == b'quit\r\n':
+                return
+            conn.sendall(b'$4\r\nPONG\r\n')
 
 
 if __name__ == "__main__":
-    main()
+    # creates a new event loop
+    asyncio.run(main())
