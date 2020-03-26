@@ -136,7 +136,7 @@ def handle_request(cmd, args):
                 raise ValueError(
                     "Arg formatting is not RESP-compliant. Please check.")
             REDIS_DB[key] = str(args[3], encoding="utf-8")
-        return b"\r\n".join([*args[:2], b""])
+        return b"$2\r\nOK\r\n"
     elif cmd.upper() == GET:
         if len(args) != 2:
             raise ValueError("GET expects a single key")
