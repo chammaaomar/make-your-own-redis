@@ -150,7 +150,7 @@ def handle_request(cmd, args):
                     "Arg formatting is not RESP-compliant. Please check.")
             REDIS_DB[key] = str(args[3], encoding="utf-8")
             opt_indx = 4
-        opts = args[opt_indx:]
+        opts = [arg.upper() for arg in args[opt_indx:]]
         exp_indx = safe_index(opts, PX)
         if exp_indx > -1:
             if (bad_string_format(opts[exp_indx - 1], opts[exp_indx])
