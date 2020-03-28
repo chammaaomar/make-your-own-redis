@@ -29,7 +29,9 @@ or use your favorite linux package manager. Simply start up the cli by typing
 * Currently querying via telnet doesn't work, as far as I can tell, because
 if you try to write a command in accordance with [RESP](https://redis.io/topics/protocol#resp-simple-strings), for exmaple
 `set redis awesome`, which is
+
 ```*2\r\n$3\r\nset\r\n$5\r\nredis\r\n\$7\r\nawesome\r\n``` 
+
 telnet just escapes all the CRLF `\r\n` and thus the parser doesn't work correctly.
 * handling concurrent clients is implemented via threads, whereas real Redis implementation is
 single-threaded and based on event-loops. Likewise, key expiry uses a sleeping thread, that only
