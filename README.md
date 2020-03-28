@@ -36,4 +36,5 @@ telnet just escapes all the CRLF `\r\n` and thus the parser doesn't work correct
 * handling concurrent clients is implemented via threads, whereas real Redis implementation is
 single-threaded and based on event-loops. Likewise, key expiry uses a sleeping thread, that only
 wakes up after the Time-To-Live (TTL) has passed. There is a more elegant way.
+* add docstrings
 * Implement more data types and commands
