@@ -1,2 +1,2 @@
 #!/bin/sh
-exec python -m app.main
+PYTHONPATH=$PYTHONPATH:"$(pwd)" python3 app/main.py
