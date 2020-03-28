@@ -8,55 +8,29 @@ event loops, the Redis protocol and more.
 **Note**: If you're viewing this repo on GitHub, head over to
 [codecrafters.io](https://codecrafters.io) to signup for early access.
 
-# Usage
+## Usage
 
-1. Ensure you have `python (3.8)` installed locally
-1. Run `./spawn_redis_server.sh` to run your Redis server, which is implemented in
-   `app/main.py`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
- 
-# Passing the first stage
-
-CodeCrafters runs tests when you do a `git push`. Make an empty commit and push
-your solution to see the first stage fail.
-   
-``` sh
-git commit --allow-empty -m "Running tests"
-git push origin master
-```
-
-You should see a failure message that says it wasn't able to connect to port
-`6379`.
-
-Go to `app/main.py` and uncomment the server implementation. Commit and
-push your changes, and you'll now see the first stage pass.
-
-Time to move on to the next stage!
-
-# Troubleshooting
-
-### module `socket` has not attribute `create_server`
-
-When running your server locally, you might see an error like this: 
+1. Ensure you have `python (3.7)` or higher installed locally
+1. Run `./spawn_redis_server.sh` to run the Redis server, which is implemented in
+   `app/`.
+1. The Redis server will be launched and bound to port 6379, the default
+Redis port. You can speak to it using the redis-cli. You can compile the redis server +
+cli directly [from source](https://redis.io/topics/quickstart) or install on macOS via homebrew
 
 ```
-Traceback (most recent call last):
-  File "/usr/local/lib/pyenv/versions/3.7.3/lib/python3.7/runpy.py", line 193, in _run_module_as_main
-    "__main__", mod_spec)
-  File "/usr/local/lib/pyenv/versions/3.7.3/lib/python3.7/runpy.py", line 85, in _run_code
-    exec(code, run_globals)
-  File "/app/app/main.py", line 11, in <module>
-    main()
-  File "/app/app/main.py", line 6, in main
-    s = socket.create_server(("localhost", 6379), reuse_port=True)
-AttributeError: module 'socket' has no attribute 'create_server'
+brew install redis
 ```
 
-This is because `socket.create_server` was introduced in Python 3.8, and you
-might be running an older version. 
+or use your favorite linux package manager. Simply start up the cli by typing
+`redis-cli` in the terminal.
 
-You can fix this by installing Python 3.8 locally and using that. 
+## TODO
 
-If you'd like to use a different version of Python, change the `language_pack`
-value in `codecrafters.yml`.
+* Currently querying via telnet doesn't work, as far as I can tell, because
+if you try to write a command in accordance with [RESP](https://redis.io/topics/protocol#resp-simple-strings), for exmaple
+`set redis awesome`, which is `*2\r\n$3\r\nset\r\n$5\r\nredis\r\n\$7\r\nawesome\r\n`, telnet just
+escapes all the CRLF `\r\n` and thus the parser doesn't work correctly.
+* handling concurrent clients is implemented via threads, whereas real Redis implementation is
+single-threaded and based on event-loops. Likewise, key expiry uses a sleeping thread, that only
+wakes up after the Time-To-Live (TTL) has passed. There is a more elegant way.
+* Implement more data types and commands
