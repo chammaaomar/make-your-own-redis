@@ -9,7 +9,6 @@ import app.utils as utils
 def main():
     print("Welcome to O-Redis!")
 
-    # Uncomment this to pass the first stage
     # localhost (loopback interface; processes on host talk only)
     HOST = "127.0.0.1"
     PORT = 6379  # default redis port; unprivileged > 1023
