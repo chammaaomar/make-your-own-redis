@@ -34,7 +34,6 @@ def handle_set(args):
     exp_indx = utils.safe_index(opts, RESP.PX)
     if exp_indx > -1:
         ttl = int(opts[exp_indx + 2], base=10)
-        print(ttl)
         expiry_thread = threading.Thread(
             target=expire_key, args=(key, ttl))
         expiry_thread.start()
