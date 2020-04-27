@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: 3.6
       - name: get redis-cli
-        run: apt-get install redis-server
+        run: sudo apt-get install redis-server
       - name: build python redis server
         run: ./spawn_redis_server.sh &
       - name: test ping
