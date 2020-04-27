@@ -30,6 +30,6 @@ jobs:
         with:
           number of databases: 0
       - name: build python redis server
-        run: ./spawn_redis_server.sh
+        run: ./spawn_redis_server.sh &
       - name: test ping
         run: cd tests && ./test-ping.sh
