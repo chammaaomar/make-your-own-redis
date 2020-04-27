@@ -26,9 +26,8 @@ jobs:
       - uses: actions/setup-python@v1.2.0
         with:
           python-version: 3.6
-      - uses: zhulik/redis-action@1.1.0
-        with:
-          number of databases: 0
+      - name: get redis-cli
+        run: apt-get install redis-server
       - name: build python redis server
         run: ./spawn_redis_server.sh &
       - name: test ping
