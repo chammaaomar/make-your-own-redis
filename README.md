@@ -1,6 +1,6 @@
 This is my Python solution to the ["Build Your Own Redis" Challenge](https://codecrafters.io/challenges/redis).
 
-**Note**: [codecrafters.io](https://codecrafters.io) to signup for early access.
+**Note**: Head over to [codecrafters.io](https://codecrafters.io) to signup for early access.
 
 ## Usage
 
